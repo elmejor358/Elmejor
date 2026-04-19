@@ -13,8 +13,19 @@
             position: absolute; top: 7%; left: 50%; transform: translateX(-50%);
             text-align: center; pointer-events: none; z-index: 10; width: 90%;
         }
-        .hud h1 { font-size: 2.1rem; color: #ffcc00; margin: 0; letter-spacing: 2px; font-weight: 300; text-shadow: 0 0 20px rgba(255,204,0,0.7); }
-        .hud p  { font-size: 0.82rem; color: #bbb; margin: 5px 0 0 0; }
+        .hud h1 {
+            font-size: 2.1rem;
+            color: #ffcc00;
+            margin: 0;
+            letter-spacing: 2px;
+            font-weight: 300;
+            text-shadow: 0 0 20px rgba(255,204,0,0.7);
+        }
+        .hud p  {
+            font-size: 0.82rem;
+            color: #bbb;
+            margin: 5px 0 0 0;
+        }
 
         #verse-overlay {
             display: none;
@@ -25,11 +36,14 @@
             align-items: center;
         }
         #verse-overlay.visible { display: flex; }
+
         .verse-backdrop {
-            position: absolute; inset: 0;
+            position: absolute;
+            inset: 0;
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
         }
+
         .verse-card {
             position: relative;
             max-width: 340px;
@@ -40,10 +54,18 @@
             padding: 28px 24px 22px;
             text-align: center;
             box-shadow: 0 0 40px rgba(255,180,0,0.25);
+            animation: pop 0.35s ease;
         }
+
+        @keyframes pop {
+            from { transform: scale(0.6); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         .verse-emoji { font-size: 2.6rem; margin-bottom: 12px; display: block; }
         .verse-text  { font-size: 1rem; color: #ffeaa0; line-height: 1.65; font-style: italic; margin: 0 0 14px; }
-        .verse-ref   { font-size: 0.85rem; color: #ffcc00; font-weight: 600; }
+        .verse-ref   { font-size: 0.85rem; color: #ffcc00; font-weight: 600; letter-spacing: 1px; }
+
         .verse-close {
             margin-top: 20px;
             background: rgba(255,204,0,0.15);
@@ -69,44 +91,82 @@
             <span class="verse-emoji" id="vEmoji">🌻</span>
             <p class="verse-text" id="vText"></p>
             <div class="verse-ref" id="vRef"></div>
-            <br>
             <button class="verse-close" onclick="closeVerse()">Amén ✨</button>
         </div>
     </div>
 
     <canvas id="gc"></canvas>
 
-    <script>
-    'use strict';
+<script>
+'use strict';
 
-    const VERSES = [
-        { text: "Porque de tal manera amó Dios al mundo...", ref: "Juan 3:16", emoji: "✝️" }
-    ];
+// ─── Versículos ─────────────────────────────────────────────
+const VERSES = [
+    { text: "Porque de tal manera amó Dios al mundo...", ref: "Juan 3:16", emoji: "✝️" },
+    { text: "El amor nunca deja de ser.", ref: "1 Corintios 13:8", emoji: "🌻" },
+    { text: "Dios es amor.", ref: "1 Juan 4:8", emoji: "💛" },
+    { text: "El que permanece en amor permanece en Dios.", ref: "1 Juan 4:16", emoji: "🌟" }
+];
 
-    const overlay = document.getElementById('verse-overlay');
-    const vText   = document.getElementById('vText');
-    const vRef    = document.getElementById('vRef');
-    const vEmoji  = document.getElementById('vEmoji');
+const overlay = document.getElementById('verse-overlay');
+const vText = document.getElementById('vText');
+const vRef = document.getElementById('vRef');
+const vEmoji = document.getElementById('vEmoji');
 
-    let lastVerseIdx = -1;
+let lastVerse = -1;
 
-    function showVerse() {
-        let idx;
-        do { idx = Math.floor(Math.random() * VERSES.length); } while (idx === lastVerseIdx);
-        lastVerseIdx = idx;
+function showVerse() {
+    let i;
+    do { i = Math.floor(Math.random() * VERSES.length); } while (i === lastVerse);
+    lastVerse = i;
 
-        const v = VERSES[idx];
-        vText.textContent = `"${v.text}"`;
-        vRef.textContent = v.ref;
-        vEmoji.textContent = v.emoji;
+    const v = VERSES[i];
+    vText.textContent = `"${v.text}"`;
+    vRef.textContent = v.ref;
+    vEmoji.textContent = v.emoji;
 
-        overlay.classList.add('visible');
+    overlay.classList.add('visible');
+}
+
+function closeVerse() {
+    overlay.classList.remove('visible');
+}
+
+// ─── Canvas Universo ─────────────────────────────────────────
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+
+let W, H;
+
+function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// partículas simples de universo 🌌
+const stars = Array.from({ length: 500 }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    z: Math.random() * 1
+}));
+
+function draw() {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+
+    for (let s of stars) {
+        s.y += 0.2 + s.z;
+        if (s.y > H) s.y = 0;
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(s.x, s.y, 1 + s.z, 1 + s.z);
     }
 
-    function closeVerse() {
-        overlay.classList.remove('visible');
-    }
-
-    </script>
+    requestAnimationFrame(draw);
+}
+draw();
+</script>
 </body>
 </html>
