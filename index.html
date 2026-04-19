@@ -1,208 +1,121 @@
-<!DOCTYPE html>
-<html lang="es">
+<html>
+<meta charset='UTF-8'/>
+<meta content='width=device-width, initial-scale=1, user-scalable=1, minimum-scale=1, maximum-scale=5' name='viewport'/>
+<meta content='IE=edge' http-equiv='X-UA-Compatible'/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
+<script src="https://kit.fontawesome.com/4f3ce16e3e.js" crossorigin="anonymous"></script>
+
+<link rel="icon" href="./midias/envelope.png">
+<link href="https://Blog.feeldream.repl.co/style.css" rel="stylesheet" type="text/css" />
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Para Mía Li - Galaxia de Flores</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; }
-        canvas { display: block; }
-        .hud {
-            position: absolute; top: 7%; left: 50%; transform: translateX(-50%);
-            text-align: center; pointer-events: none; z-index: 10; width: 90%;
-        }
-        .hud h1 { font-size: 2.1rem; color: #ffcc00; margin: 0; letter-spacing: 2px; font-weight: 300; text-shadow: 0 0 20px rgba(255,204,0,0.7); }
-        .hud p  { font-size: 0.82rem; color: #bbb; margin: 5px 0 0 0; }
-
-        #verse-overlay {
-            display: none; position: fixed; inset: 0; z-index: 100;
-            justify-content: center; align-items: center;
-        }
-        #verse-overlay.visible { display: flex; }
-        .verse-backdrop {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-        }
-        .verse-card {
-            position: relative; max-width: 340px; width: 88%;
-            background: linear-gradient(145deg, #1a1000, #2a1800);
-            border: 1px solid rgba(255,204,0,0.35); border-radius: 20px;
-            padding: 28px 24px 22px; text-align: center;
-            box-shadow: 0 0 40px rgba(255,180,0,0.25);
-            animation: verseIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        @keyframes verseIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .verse-emoji { font-size: 2.6rem; margin-bottom: 12px; display: block; }
-        .verse-text { font-size: 1rem; color: #ffeaa0; line-height: 1.65; font-style: italic; margin: 0 0 14px; }
-        .verse-ref { font-size: 0.85rem; color: #ffcc00; font-weight: 600; }
-        .verse-close {
-            margin-top: 20px; background: rgba(255,204,0,0.15); border: 1px solid rgba(255,204,0,0.4);
-            color: #ffcc00; padding: 9px 28px; border-radius: 50px; cursor: pointer;
-        }
-    </style>
+<title>PARA DECIRTE QUE TE AMO</title>
 </head>
+
+<style>
+:root {
+--warna-bg: rgba(0, 0, 0, .25); 
+--warna-teks: white;
+--warna-bingkai: rgba(255, 255, 255, .8);
+--bingkai: 10px;
+--gaya-font: 'Ubuntu', sans-serif;
+--gaya-font2: 'Dancing Script', sans-serif;
+}
+
+body{
+background-color:#101010;
+font-family:var(--gaya-font);
+padding:25px;
+user-select:none;
+}
+
+body::before{
+content:"\00A9 TE AMO MI PRINCESA ❤️";
+color:white;
+opacity:.3;
+font-size:2vw;
+position:fixed;
+bottom:25px;
+left:25px;
+}
+</style>
+
 <body>
-    <div class="hud">
-        <h1>Para Mía Li 🌻</h1>
-        <p>Desliza para rotar · Pellizca para zoom · Toca una flor 🌻</p>
-    </div>
 
-    <div id="verse-overlay">
-        <div class="verse-backdrop" onclick="closeVerse()"></div>
-        <div class="verse-card">
-            <span class="verse-emoji" id="vEmoji">🌻</span>
-            <p class="verse-text" id="vText"></p>
-            <div class="verse-ref" id="vRef"></div>
-            <br>
-            <button class="verse-close" onclick="closeVerse()">Amén ✨</button>
-        </div>
-    </div>
+<div id='Content'>
 
-    <canvas id="gc"></canvas>
-    <script>
-    'use strict';
-    const VERSES = [
-        { text: "Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito...", ref: "Juan 3:16", emoji: "✝️" },
-        { text: "Amarás al Señor tu Dios con todo tu corazón...", ref: "Mateo 22:37", emoji: "❤️" },
-        { text: "Dios es amor; y el que permanece en amor, permanece en Dios...", ref: "1 Juan 4:16", emoji: "🌟" },
-        { text: "El amor es sufrido, es benigno; el amor no tiene envidia...", ref: "1 Corintios 13:4", emoji: "🌻" },
-        { text: "Todo lo sufre, todo lo cree, todo lo espera, todo lo soporta...", ref: "1 Corintios 13:7-8", emoji: "♾️" },
-        { text: "Yo soy de mi amado, y mi amado es mío.", ref: "Cantares 6:3", emoji: "🌺" }
-    ];
+<div id="suratin" onClick="memulai();audio.play();">
+<img src="./midias/envelope.png"/>
+</div>
 
-    const overlay = document.getElementById('verse-overlay');
-    const vText = document.getElementById('vText');
-    const vRef = document.getElementById('vRef');
-    const vEmoji = document.getElementById('vEmoji');
-    let verseOpen = false;
+<p id="ket">¡HAZ CLIC EN MI CARTA DE AMOR!</p>
 
-    function showVerse() {
-        const v = VERSES[Math.floor(Math.random() * VERSES.length)];
-        vText.textContent = `"${v.text}"`;
-        vRef.textContent = v.ref;
-        vEmoji.textContent = v.emoji;
-        overlay.classList.add('visible');
-        verseOpen = true;
-    }
-    function closeVerse() { overlay.classList.remove('visible'); verseOpen = false; }
+<blockquote id='bq'>
+<p id="kalimat"></p>
+<p id="kalimatb"></p>
+<p id="kalimatc"></p>
+</blockquote>
 
-    const canvas = document.getElementById('gc');
-    const ctx = canvas.getContext('2d', { alpha: false });
-    let W, H;
+<div id="Tombol">
+<a id="By" onClick="multifungsi()">
+<b id="tmbl">SÍ</b>
+</a>
 
-    function resize() {
-        W = canvas.width = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
+<a id="Bn" onClick="tolak()">NO</a>
+</div>
 
-    // --- Universo Fondo ---
-    const bgStars = Array.from({length: 400}, () => ({
-        x: Math.random() * 2000 - 1000,
-        y: Math.random() * 2000 - 1000,
-        z: Math.random() * 2000,
-        s: Math.random() * 2
-    }));
+</div>
 
-    // --- Partículas Galaxia ---
-    const N = 900, ARMS = 5;
-    const MSGS = ["Mía Li, eres alegría","Luz en mi vida","Alegras mis días","Flores para Mía","Eres especial"];
-    const EMOJ = ["🌻","🌼","✨"];
-    const TYPE_STAR = 0, TYPE_FLOWER = 1, TYPE_TEXT = 2;
+<script>
 
-    const px = new Float32Array(N), py = new Float32Array(N), pz = new Float32Array(N);
-    const pix = new Float32Array(N), piy = new Float32Array(N), piz = new Float32Array(N);
-    const siz = new Float32Array(N), typ = new Uint8Array(N), cont = new Array(N);
-    const scx = new Float32Array(N), scy = new Float32Array(N), scr = new Float32Array(N);
+/* ALERTAS TRADUCIDAS */
 
-    for (let i = 0; i < N; i++) {
-        const radius = Math.random() * 900;
-        const arm = (i % ARMS) * ((Math.PI * 2) / ARMS);
-        const angle = arm + radius * 0.005 + (Math.random() - 0.5) * (1100 / (radius + 10));
-        px[i] = Math.cos(angle) * radius;
-        py[i] = Math.sin(angle) * radius;
-        pz[i] = (Math.random() - 0.5) * 150;
+async function pesan(){
 
-        if (i % 60 === 0) { typ[i] = TYPE_TEXT; siz[i] = 15; cont[i] = MSGS[i % MSGS.length]; }
-        else if (i % 4 !== 0) { typ[i] = TYPE_STAR; siz[i] = Math.random() * 2.5 + 0.5; }
-        else { typ[i] = TYPE_FLOWER; siz[i] = Math.random() * 16 + 8; cont[i] = EMOJ[i % EMOJ.length]; }
-    }
+await swalst.fire({
+title: 'Hola mi pequeña ❤️',
+imageUrl: '' + stiker1.src,
+});
 
-    let rotT = 0, rotC = 0, pitT = 1.1, pitC = 1.1, zoom = 400;
-    const FOV = 600;
+await swalst.fire({
+title: '¿Cómo estás mi amor? 🥳',
+imageUrl: '' + stiker2.src,
+});
 
-    function hitTest(tx, ty) {
-        for (let i = 0; i < N; i++) {
-            if (typ[i] !== TYPE_FLOWER) continue;
-            const d = Math.hypot(tx - scx[i], ty - scy[i]);
-            if (d < Math.max(scr[i] * 1.5, 25)) return i;
-        }
-        return -1;
-    }
+await swalst.fire({
+title: 'Mi vida cambió cuando dijiste ❤️SÍ❤️',
+imageUrl: '' + stiker6.src,
+});
 
-    let dragging = false, lastX, lastY;
-    canvas.onmousedown = e => { dragging = true; lastX = e.clientX; lastY = e.clientY; };
-    window.onmousemove = e => {
-        if (!dragging) return;
-        rotT -= (e.clientX - lastX) * 0.006;
-        pitT = Math.max(0.2, Math.min(3, pitT - (e.clientY - lastY) * 0.006));
-        lastX = e.clientX; lastY = e.clientY;
-    };
-    window.onmouseup = e => { 
-        dragging = false; 
-        if (hitTest(e.clientX, e.clientY) !== -1) showVerse();
-    };
+await swalst.fire({
+title: '¿Sabías que te amo?',
+imageUrl: '' + stiker3.src,
+});
 
-    const sortIdx = Array.from({length: N}, (_, i) => i);
+await swalst.fire({
+title: 'En realidad te amo desde hace mucho 👉🏻👈🏻',
+imageUrl: '' + stiker4.src,
+});
 
-    function frame() {
-        requestAnimationFrame(frame);
-        // Fondo Cósmico
-        const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W);
-        grad.addColorStop(0, '#0a051a'); grad.addColorStop(1, '#000');
-        ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+await swalst.fire({
+title: 'Me encanta estar contigo ❤️',
+imageUrl: '' + stiker5.src,
+});
 
-        rotC += (rotT - rotC) * 0.08; pitC += (pitT - pitC) * 0.08;
-        if (!dragging) rotT += 0.001;
+katangetik = "¿TE ESTÁ GUSTANDO MI REGALO MI AMOR? 🤭❤️";
+pesanakhir1 = "¡Siii! Gracias por ser mi amor ❤️";
+pesanakhir2 = "Pulsa continuar 💫";
+pesanakhir3 = "CONTINUAR";
 
-        const cosR = Math.cos(rotC), sinR = Math.sin(rotC), cosP = Math.cos(pitC), sinP = Math.sin(pitC);
+}
+</script>
 
-        // Estrellas de Fondo Profundo
-        ctx.fillStyle = "#fff";
-        bgStars.forEach(s => {
-            const bx = (s.x + W) % W, by = (s.y + H) % H;
-            ctx.globalAlpha = 0.3; ctx.fillRect(bx, by, s.s, s.s);
-        });
-        ctx.globalAlpha = 1;
-
-        for (let i = 0; i < N; i++) {
-            const rx = px[i] * cosR - py[i] * sinR;
-            const ry = px[i] * sinR + py[i] * cosR;
-            pix[i] = rx; piy[i] = ry * cosP - pz[i] * sinP; piz[i] = ry * sinP + pz[i] * cosP;
-            sortIdx[i] = i;
-        }
-        sortIdx.sort((a,b) => piz[b] - piz[a]);
-
-        for (let j = 0; j < N; j++) {
-            const i = sortIdx[j], ds = FOV / (FOV + piz[i] + zoom);
-            const sx = W/2 + pix[i] * ds, sy = H/2 + piy[i] * ds;
-            if (sx < 0 || sx > W || sy < 0 || sy > H) continue;
-
-            if (typ[i] === TYPE_STAR) {
-                ctx.fillStyle = `rgba(255, ${200 + Math.random()*55}, 100, ${ds})`;
-                ctx.beginPath(); ctx.arc(sx, sy, siz[i]*ds, 0, 7); ctx.fill();
-            } else if (typ[i] === TYPE_FLOWER) {
-                scx[i] = sx; scy[i] = sy; scr[i] = siz[i] * ds;
-                ctx.font = `${siz[i]*ds}px Arial`; ctx.fillText(cont[i], sx, sy);
-            } else {
-                ctx.font = `bold ${siz[i]*ds}px Verdana`; ctx.fillStyle = "#fff";
-                ctx.fillText(cont[i], sx, sy);
-            }
-        }
-    }
-    frame();
-    </script>
 </body>
 </html>
