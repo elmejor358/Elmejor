@@ -8,25 +8,14 @@
         * { box-sizing: border-box; }
         body { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; }
         canvas { display: block; }
-
         .hud {
             position: absolute; top: 7%; left: 50%; transform: translateX(-50%);
             text-align: center; pointer-events: none; z-index: 10; width: 90%;
         }
-        .hud h1 {
-            font-size: 2.1rem;
-            color: #ffcc00;
-            margin: 0;
-            letter-spacing: 2px;
-            font-weight: 300;
-            text-shadow: 0 0 20px rgba(255,204,0,0.7);
-        }
-        .hud p  {
-            font-size: 0.82rem;
-            color: #bbb;
-            margin: 5px 0 0 0;
-        }
+        .hud h1 { font-size: 2.1rem; color: #ffcc00; margin: 0; letter-spacing: 2px; font-weight: 300; text-shadow: 0 0 20px rgba(255,204,0,0.7); }
+        .hud p  { font-size: 0.82rem; color: #bbb; margin: 5px 0 0 0; }
 
+        /* ── Versículo Overlay ── */
         #verse-overlay {
             display: none;
             position: fixed;
@@ -36,14 +25,12 @@
             align-items: center;
         }
         #verse-overlay.visible { display: flex; }
-
         .verse-backdrop {
-            position: absolute;
-            inset: 0;
+            position: absolute; inset: 0;
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
-
         .verse-card {
             position: relative;
             max-width: 340px;
@@ -53,19 +40,19 @@
             border-radius: 20px;
             padding: 28px 24px 22px;
             text-align: center;
-            box-shadow: 0 0 40px rgba(255,180,0,0.25);
-            animation: pop 0.35s ease;
+            box-shadow: 0 0 40px rgba(255,180,0,0.25), 0 0 80px rgba(255,180,0,0.08);
+            animation: verseIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
         }
-
-        @keyframes pop {
+        @keyframes verseIn {
             from { transform: scale(0.6); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            to   { transform: scale(1);   opacity: 1; }
         }
-
         .verse-emoji { font-size: 2.6rem; margin-bottom: 12px; display: block; }
-        .verse-text  { font-size: 1rem; color: #ffeaa0; line-height: 1.65; font-style: italic; margin: 0 0 14px; }
+        .verse-text  {
+            font-size: 1rem; color: #ffeaa0; line-height: 1.65;
+            font-style: italic; margin: 0 0 14px;
+        }
         .verse-ref   { font-size: 0.85rem; color: #ffcc00; font-weight: 600; letter-spacing: 1px; }
-
         .verse-close {
             margin-top: 20px;
             background: rgba(255,204,0,0.15);
@@ -75,10 +62,12 @@
             border-radius: 50px;
             font-size: 0.88rem;
             cursor: pointer;
+            letter-spacing: 1px;
+            transition: background 0.2s;
         }
+        .verse-close:hover { background: rgba(255,204,0,0.3); }
     </style>
 </head>
-
 <body>
     <div class="hud">
         <h1>Para Mía Li 🌻</h1>
@@ -91,82 +80,269 @@
             <span class="verse-emoji" id="vEmoji">🌻</span>
             <p class="verse-text" id="vText"></p>
             <div class="verse-ref" id="vRef"></div>
+            <br>
             <button class="verse-close" onclick="closeVerse()">Amén ✨</button>
         </div>
     </div>
 
     <canvas id="gc"></canvas>
+    <script>
+    'use strict';
+    // ─── Versículos ───────────────────────────────────────────────────────────────
+    const VERSES = [
+        { text: "Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.", ref: "Juan 3:16", emoji: "✝️" },
+        { text: "Amarás al Señor tu Dios con todo tu corazón, con toda tu alma y con toda tu mente.", ref: "Mateo 22:37", emoji: "❤️" },
+        { text: "Dios es amor; y el que permanece en amor, permanece en Dios, y Dios en él.", ref: "1 Juan 4:16", emoji: "🌟" },
+        { text: "Nosotros le amamos a él, porque él nos amó primero.", ref: "1 Juan 4:19", emoji: "💛" },
+        { text: "El amor es sufrido, es benigno; el amor no tiene envidia, no se jacta, no se envanece.", ref: "1 Corintios 13:4", emoji: "🌻" },
+        { text: "Todo lo sufre, todo lo cree, todo lo espera, todo lo soporta. El amor nunca deja de ser.", ref: "1 Corintios 13:7-8", emoji: "♾️" },
+        { text: "Ahora permanecen la fe, la esperanza y el amor, estos tres; pero el mayor de ellos es el amor.", ref: "1 Corintios 13:13", emoji: "🌼" },
+        { text: "El que no ama, no ha conocido a Dios; porque Dios es amor.", ref: "1 Juan 4:8", emoji: "💫" },
+        { text: "Sean benignos y misericordiosos el uno con el otro, perdonándose mutuamente como Dios también os perdonó en Cristo.", ref: "Efesios 4:32", emoji: "🤍" },
+        { text: "Sobre todo, vestíos de amor, que es el vínculo perfecto de la unidad.", ref: "Colosenses 3:14", emoji: "🌻" },
+        { text: "Maridos, amad a vuestras mujeres, así como Cristo amó a la iglesia y se entregó a sí mismo por ella.", ref: "Efesios 5:25", emoji: "💍" },
+        { text: "¡Cuán dulces son a mi paladar tus palabras! ¡Más que la miel a mi boca!", ref: "Salmo 119:103", emoji: "🍯" },
+        { text: "Encomienda al Señor tu camino; confía en él, y él actuará.", ref: "Salmo 37:5", emoji: "✨" },
+        { text: "Yo soy de mi amado, y mi amado es mío.", ref: "Cantares 6:3", emoji: "🌺" },
+        { text: "Me mostró amor y a él me uní para siempre, como palmera plantada junto a corrientes de agua.", ref: "Cantares 3:4", emoji: "🌿" },
+        { text: "Poned la mira en las cosas de arriba, no en las de la tierra.", ref: "Colosenses 3:2", emoji: "⭐" },
+        { text: "El amor perfecto echa fuera el temor.", ref: "1 Juan 4:18", emoji: "🕊️" },
+        { text: "Hijo mío, que el amor y la fidelidad nunca te abandonen; átalos a tu cuello y escríbelos en la tablilla de tu corazón.", ref: "Proverbios 3:3", emoji: "💛" },
+        { text: "Alegráos con la esposa de vuestra juventud. Déjate cautivar siempre por su amor.", ref: "Proverbios 5:18-19", emoji: "🌻" },
+        { text: "Nadie tiene mayor amor que este: que uno ponga su vida por sus amigos.", ref: "Juan 15:13", emoji: "🌹" }
+    ];
 
-<script>
-'use strict';
+    // ─── Verse DOM ────────────────────────────────────────────────────────────────
+    const overlay   = document.getElementById('verse-overlay');
+    const vText     = document.getElementById('vText');
+    const vRef      = document.getElementById('vRef');
+    const vEmoji    = document.getElementById('vEmoji');
+    let verseOpen   = false;
+    let lastVerseIdx = -1;
 
-// ─── Versículos ─────────────────────────────────────────────
-const VERSES = [
-    { text: "Porque de tal manera amó Dios al mundo...", ref: "Juan 3:16", emoji: "✝️" },
-    { text: "El amor nunca deja de ser.", ref: "1 Corintios 13:8", emoji: "🌻" },
-    { text: "Dios es amor.", ref: "1 Juan 4:8", emoji: "💛" },
-    { text: "El que permanece en amor permanece en Dios.", ref: "1 Juan 4:16", emoji: "🌟" }
-];
-
-const overlay = document.getElementById('verse-overlay');
-const vText = document.getElementById('vText');
-const vRef = document.getElementById('vRef');
-const vEmoji = document.getElementById('vEmoji');
-
-let lastVerse = -1;
-
-function showVerse() {
-    let i;
-    do { i = Math.floor(Math.random() * VERSES.length); } while (i === lastVerse);
-    lastVerse = i;
-
-    const v = VERSES[i];
-    vText.textContent = `"${v.text}"`;
-    vRef.textContent = v.ref;
-    vEmoji.textContent = v.emoji;
-
-    overlay.classList.add('visible');
-}
-
-function closeVerse() {
-    overlay.classList.remove('visible');
-}
-
-// ─── Canvas Universo ─────────────────────────────────────────
-const canvas = document.getElementById('gc');
-const ctx = canvas.getContext('2d');
-
-let W, H;
-
-function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-// partículas simples de universo 🌌
-const stars = Array.from({ length: 500 }, () => ({
-    x: Math.random() * W,
-    y: Math.random() * H,
-    z: Math.random() * 1
-}));
-
-function draw() {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, W, H);
-
-    for (let s of stars) {
-        s.y += 0.2 + s.z;
-        if (s.y > H) s.y = 0;
-
-        ctx.fillStyle = "white";
-        ctx.fillRect(s.x, s.y, 1 + s.z, 1 + s.z);
+    function showVerse() {
+        let idx;
+        do { idx = Math.floor(Math.random() * VERSES.length); } while (idx === lastVerseIdx);
+        lastVerseIdx = idx;
+        const v = VERSES[idx];
+        vText.textContent  = `"${v.text}"`;
+        vRef.textContent   = v.ref;
+        vEmoji.textContent = v.emoji;
+        overlay.classList.add('visible');
+        verseOpen = true;
+    }
+    function closeVerse() {
+        overlay.classList.remove('visible');
+        verseOpen = false;
     }
 
-    requestAnimationFrame(draw);
-}
-draw();
-</script>
+    // ─── Canvas ───────────────────────────────────────────────────────────────────
+    const canvas = document.getElementById('gc');
+    const ctx    = canvas.getContext('2d', { alpha: false });
+    let W = 0, H = 0;
+
+    function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, W, H);
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+    resize();
+
+    // ─── Partículas ───────────────────────────────────────────────────────────────
+    const N    = 900;
+    const ARMS = 5;
+    const MSGS = ["Mía Li, eres alegría","Luz en mi vida","Alegras mis días","Flores para Mía","Eres muy especial","Atesoro tu compañía","Sonríe siempre"];
+    const EMOJ = ["🌻","🌻","🌼","✨","🌻","🌼"];
+
+    const TYPE_STAR   = 0;
+    const TYPE_FLOWER = 1;
+    const TYPE_TEXT   = 2;
+
+    const px    = new Float32Array(N);
+    const py    = new Float32Array(N);
+    const pz    = new Float32Array(N);
+    const pix   = new Float32Array(N);
+    const piy   = new Float32Array(N);
+    const piz   = new Float32Array(N);
+    const siz   = new Float32Array(N);
+    const typ   = new Uint8Array(N);
+    const cr    = new Uint8Array(N);
+    const cg    = new Uint8Array(N);
+    const cb    = new Uint8Array(N);
+    const cont  = new Array(N);
+
+    const scx = new Float32Array(N);
+    const scy = new Float32Array(N);
+    const scr = new Float32Array(N);
+
+    for (let i = 0; i < N; i++) {
+        const radius     = Math.random() * 900;
+        const arm        = (i % ARMS) * ((Math.PI * 2) / ARMS);
+        const angle      = arm + radius * 0.005 + (Math.random() - 0.5) * (1100 / (radius + 10));
+        px[i] = Math.cos(angle) * radius;
+        py[i] = Math.sin(angle) * radius;
+        pz[i] = (Math.random() - 0.5) * 100;
+
+        if (i % 55 === 0) {
+            typ[i] = TYPE_TEXT;   siz[i] = 15; cont[i] = MSGS[i % MSGS.length];
+        } else if (i % 4 !== 0) {
+            typ[i] = TYPE_STAR;   siz[i] = Math.random() * 2 + 0.3;
+        } else {
+            typ[i] = TYPE_FLOWER; siz[i] = Math.random() * 16 + 8;
+            cont[i] = EMOJ[Math.floor(Math.random() * EMOJ.length)];
+        }
+
+        const hue = 45 + Math.random() * 15;
+        const lit = (60 + Math.random() * 40) / 100;
+        const a_  = Math.min(lit, 1 - lit);
+        const fn  = n => { const k = (n + hue / 30) % 12; return Math.round((lit - a_ * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))) * 255); };
+        cr[i] = fn(0); cg[i] = fn(8); cb[i] = fn(4);
+    }
+
+    let rotT = 0, rotC = 0, pitT = 1.1, pitC = 1.1, zoom = 400;
+    const FOV = 600;
+
+    function hitTest(tapX, tapY) {
+        let best = -1, bestDist = Infinity;
+        for (let i = 0; i < N; i++) {
+            if (typ[i] !== TYPE_FLOWER) continue;
+            const dx = tapX - scx[i], dy = tapY - scy[i];
+            const d  = Math.sqrt(dx * dx + dy * dy);
+            const hitRadius = Math.max(scr[i] * 1.5, 28);
+            if (d < hitRadius && d < bestDist) { best = i; bestDist = d; }
+        }
+        return best;
+    }
+
+    let dragging = false, lastX = 0, lastY = 0, pinchBase = null;
+    let tapStartX = 0, tapStartY = 0, tapMoved = false;
+
+    canvas.addEventListener('touchstart', e => {
+        if (verseOpen) return;
+        if (e.touches.length === 2) {
+            dragging = false;
+            pinchBase = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        } else {
+            tapStartX = e.touches[0].clientX; tapStartY = e.touches[0].clientY; tapMoved = false;
+            dragging = true; lastX = tapStartX; lastY = tapStartY;
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        if (verseOpen) return;
+        if (e.touches.length === 2 && pinchBase !== null) {
+            const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            zoom -= (d - pinchBase) * 4;
+            zoom = Math.max(80, Math.min(1800, zoom));
+            pinchBase = d; dragging = false;
+        } else if (e.touches.length === 1 && dragging) {
+            const dx = e.touches[0].clientX - lastX, dy = e.touches[0].clientY - lastY;
+            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) tapMoved = true;
+            rotT -= dx * 0.006;
+            pitT = Math.max(0.15, Math.min(Math.PI - 0.15, pitT - dy * 0.006));
+            lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+        dragging = false; pinchBase = null;
+        if (!tapMoved && e.changedTouches.length === 1) {
+            const tx = e.changedTouches[0].clientX, ty = e.changedTouches[0].clientY;
+            if (hitTest(tx, ty) !== -1) showVerse();
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('mousedown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; tapMoved = false; tapStartX = e.clientX; tapStartY = e.clientY; });
+    canvas.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const dx = e.clientX - lastX, dy = e.clientY - lastY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) tapMoved = true;
+        rotT -= dx * 0.006;
+        pitT = Math.max(0.15, Math.min(Math.PI - 0.15, pitT - dy * 0.006));
+        lastX = e.clientX; lastY = e.clientY;
+    });
+    canvas.addEventListener('mouseup', e => {
+        dragging = false;
+        if (!tapMoved) { if (hitTest(e.clientX, e.clientY) !== -1) showVerse(); }
+    });
+    canvas.addEventListener('mouseleave', () => { dragging = false; });
+    canvas.addEventListener('wheel', e => { zoom = Math.max(80, Math.min(1800, zoom + e.deltaY)); }, { passive: true });
+
+    const sortIdx = Array.from({ length: N }, (_, i) => i);
+    function sortByDepth(a, b) { return piz[b] - piz[a]; }
+
+    let lastFont = '';
+    function setFont(sz, bold) {
+        const f = bold ? `bold ${sz}px Verdana` : `${sz}px Arial`;
+        if (f !== lastFont) { ctx.font = f; lastFont = f; }
+    }
+
+    canvas.addEventListener('mousemove', e => {
+        if (dragging) { canvas.style.cursor = 'grabbing'; return; }
+        canvas.style.cursor = hitTest(e.clientX, e.clientY) !== -1 ? 'pointer' : 'grab';
+    });
+
+    function frame() {
+        requestAnimationFrame(frame);
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, W, H);
+        rotC += (rotT - rotC) * 0.08;
+        pitC += (pitT - pitC) * 0.08;
+        if (!dragging && pinchBase === null) rotT += 0.0012;
+        const cosR = Math.cos(rotC), sinR = Math.sin(rotC);
+        const cosP = Math.cos(pitC), sinP = Math.sin(pitC);
+        const rd = FOV / (FOV + zoom);
+        ctx.strokeStyle = 'rgba(255,220,0,0.55)'; ctx.lineWidth = 12 * rd;
+        ctx.beginPath(); ctx.ellipse(W/2, H/2, Math.max(5, 110 * rd), Math.max(5, 110 * rd * Math.abs(cosP)), 0, 0, Math.PI*2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 3 * rd;
+        ctx.beginPath(); ctx.ellipse(W/2, H/2, Math.max(5, 125 * rd), Math.max(3, 125 * rd * Math.abs(cosP)), 0, 0, Math.PI*2); ctx.stroke();
+
+        for (let i = 0; i < N; i++) {
+            const rx   = px[i] * cosR - py[i] * sinR;
+            const ry1  = px[i] * sinR + py[i] * cosR;
+            pix[i] = rx;
+            piy[i] = ry1 * cosP - pz[i] * sinP;
+            piz[i] = ry1 * sinP + pz[i] * cosP;
+            sortIdx[i] = i;
+        }
+        sortIdx.sort(sortByDepth);
+
+        for (let j = 0; j < N; j++) {
+            const i    = sortIdx[j];
+            const denom = FOV + piz[i] + zoom;
+            if (denom < 10) { scr[i] = 0; continue; }
+            const ds   = FOV / denom;
+            const sx   = W / 2 + pix[i] * ds;
+            const sy   = H / 2 + piy[i] * ds;
+            if (sx < -60 || sx > W + 60 || sy < -60 || sy > H + 60) { scr[i] = 0; continue; }
+            const t = typ[i];
+            if (t === TYPE_STAR) {
+                const rad = Math.max(0.4, siz[i] * ds);
+                if (rad > 30) continue;
+                ctx.fillStyle = `rgb(${cr[i]},${cg[i]},${cb[i]})`;
+                ctx.beginPath(); ctx.arc(sx, sy, rad, 0, 6.2832); ctx.fill();
+                scr[i] = 0;
+            } else if (t === TYPE_FLOWER) {
+                const fs   = Math.max(1, Math.min(80, siz[i] * ds)) | 0;
+                scx[i] = sx; scy[i] = sy; scr[i] = fs * 0.5;
+                setFont(fs, false);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(cont[i], sx, sy);
+            } else {
+                const fs = Math.max(6, Math.min(40, siz[i] * ds)) | 0;
+                setFont(fs, true);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillText(cont[i], sx + 1, sy + 1);
+                ctx.fillStyle = '#fff'; ctx.fillText(cont[i], sx, sy);
+                scr[i] = 0;
+            }
+        }
+    }
+    frame();
+    </script>
 </body>
 </html>
