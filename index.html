@@ -1,121 +1,312 @@
-<html>
-<meta charset='UTF-8'/>
-<meta content='width=device-width, initial-scale=1, user-scalable=1, minimum-scale=1, maximum-scale=5' name='viewport'/>
-<meta content='IE=edge' http-equiv='X-UA-Compatible'/>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
-<script src="https://kit.fontawesome.com/4f3ce16e3e.js" crossorigin="anonymous"></script>
-
-<link rel="icon" href="./midias/envelope.png">
-<link href="https://Blog.feeldream.repl.co/style.css" rel="stylesheet" type="text/css" />
-
+<!DOCTYPE html>
+<html lang="es">
 <head>
-<title>PARA DECIRTE QUE TE AMO</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Match Predictor Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .progress-bar { transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-in { animation: fadeIn 0.8s ease-in-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
 
-<style>
-:root {
---warna-bg: rgba(0, 0, 0, .25); 
---warna-teks: white;
---warna-bingkai: rgba(255, 255, 255, .8);
---bingkai: 10px;
---gaya-font: 'Ubuntu', sans-serif;
---gaya-font2: 'Dancing Script', sans-serif;
-}
+    <!-- Header -->
+    <header class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+            <i class="fa-solid fa-brain mr-2 text-emerald-400"></i>NeuroPitch AI
+        </h1>
+        <p class="text-slate-400 text-sm uppercase tracking-widest">Análisis Táctico y Predicción Deportiva de Élite</p>
+    </header>
 
-body{
-background-color:#101010;
-font-family:var(--gaya-font);
-padding:25px;
-user-select:none;
-}
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto">
+        
+        <!-- Input Section -->
+        <div class="glass-panel rounded-2xl p-6 md:p-10 mb-10 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                <div class="w-full md:w-2/5">
+                    <input type="text" id="homeTeam" placeholder="Ej: Real Madrid" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-5 py-4 text-lg focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all text-center font-semibold placeholder-slate-500">
+                </div>
+                <div class="text-3xl font-black text-slate-600 italic">VS</div>
+                <div class="w-full md:w-2/5">
+                    <input type="text" id="awayTeam" placeholder="Ej: Barcelona" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-5 py-4 text-lg focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all text-center font-semibold placeholder-slate-500">
+                </div>
+            </div>
+            <div class="text-center mt-8">
+                <button onclick="startAnalysis()" class="bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-bold py-4 px-10 rounded-full shadow-lg shadow-emerald-500/30 transition-all transform hover:scale-105 active:scale-95 text-lg flex items-center justify-center mx-auto">
+                    <i class="fa-solid fa-satellite-dish mr-3 animate-pulse"></i> Analizar Partido
+                </button>
+            </div>
+        </div>
 
-body::before{
-content:"\00A9 TE AMO MI PRINCESA ❤️";
-color:white;
-opacity:.3;
-font-size:2vw;
-position:fixed;
-bottom:25px;
-left:25px;
-}
-</style>
+        <!-- Loading State -->
+        <div id="loader" class="hidden flex-col items-center justify-center py-20">
+            <div class="relative w-24 h-24 mb-6">
+                <div class="absolute inset-0 border-t-4 border-emerald-500 border-solid rounded-full animate-spin"></div>
+                <div class="absolute inset-2 border-r-4 border-blue-500 border-solid rounded-full animate-spin direction-reverse" style="animation-direction: reverse;"></div>
+                <i class="fa-solid fa-microchip absolute inset-0 flex items-center justify-center text-3xl text-slate-300"></i>
+            </div>
+            <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400 animate-pulse" id="loadingText">Procesando historial y tácticas...</h3>
+            <p class="text-slate-500 mt-2 text-sm">Analizando millones de puntos de datos, xG y estado físico</p>
+        </div>
 
-<body>
+        <!-- Dashboard / Results Area -->
+        <div id="resultsDashboard" class="hidden opacity-0">
+            
+            <!-- Top Section: Prediction & Probabilities -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                
+                <!-- Main Prediction -->
+                <div class="glass-panel rounded-2xl p-6 border-l-4 border-emerald-500 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 opacity-5 text-9xl"><i class="fa-solid fa-trophy"></i></div>
+                    <h2 class="text-slate-400 font-semibold mb-2 uppercase text-sm">Predicción IA Final</h2>
+                    <div class="flex items-center justify-center gap-4 my-4 w-full">
+                        <span id="resHomeName" class="text-xl font-bold w-1/3 text-right truncate">Local</span>
+                        <div class="bg-slate-800 px-6 py-3 rounded-lg border border-slate-600 font-black text-4xl tracking-widest text-emerald-400">
+                            <span id="predScore">2 - 1</span>
+                        </div>
+                        <span id="resAwayName" class="text-xl font-bold w-1/3 text-left truncate">Visita</span>
+                    </div>
+                    <div class="mt-4 w-full bg-slate-800 rounded-full h-2">
+                        <div class="bg-emerald-500 h-2 rounded-full" id="confidenceBar" style="width: 85%;"></div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Nivel de Confianza: <span id="confidenceText" class="font-bold text-emerald-400">85%</span> (Alta)</p>
+                </div>
 
-<div id='Content'>
+                <!-- Win Probabilities -->
+                <div class="glass-panel rounded-2xl p-6 lg:col-span-2">
+                    <h2 class="text-lg font-bold mb-6 flex items-center border-b border-slate-700 pb-2">
+                        <i class="fa-solid fa-chart-pie text-blue-400 mr-2"></i> Probabilidades Estadísticas
+                    </h2>
+                    
+                    <div class="space-y-5">
+                        <!-- Home -->
+                        <div>
+                            <div class="flex justify-between mb-1 text-sm font-semibold">
+                                <span id="probHomeName" class="text-emerald-400">Local (Victoria)</span>
+                                <span id="probHomeVal">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-3">
+                                <div id="barHome" class="bg-gradient-to-r from-emerald-600 to-emerald-400 h-3 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Draw -->
+                        <div>
+                            <div class="flex justify-between mb-1 text-sm font-semibold">
+                                <span class="text-slate-400">Empate</span>
+                                <span id="probDrawVal">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-3">
+                                <div id="barDraw" class="bg-slate-500 h-3 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Away -->
+                        <div>
+                            <div class="flex justify-between mb-1 text-sm font-semibold">
+                                <span id="probAwayName" class="text-blue-400">Visita (Victoria)</span>
+                                <span id="probAwayVal">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-3">
+                                <div id="barAway" class="bg-gradient-to-r from-blue-600 to-blue-400 h-3 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<div id="suratin" onClick="memulai();audio.play();">
-<img src="./midias/envelope.png"/>
-</div>
+            <!-- Grid Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                
+                <!-- Forma Reciente -->
+                <div class="glass-panel rounded-xl p-5">
+                    <h3 class="text-slate-300 font-semibold mb-4 text-sm uppercase flex items-center"><i class="fa-solid fa-fire text-orange-500 mr-2"></i>Estado de Forma</h3>
+                    <div class="mb-4">
+                        <p class="text-xs text-slate-400 mb-1" id="formHomeName">Local</p>
+                        <div class="flex gap-1" id="formHomeBadges">
+                            <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xs font-bold border border-emerald-500/50">V</span>
+                            <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xs font-bold border border-emerald-500/50">V</span>
+                            <span class="w-6 h-6 rounded bg-slate-500/20 text-slate-400 flex items-center justify-center text-xs font-bold border border-slate-500/50">E</span>
+                            <span class="w-6 h-6 rounded bg-red-500/20 text-red-500 flex items-center justify-center text-xs font-bold border border-red-500/50">D</span>
+                            <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xs font-bold border border-emerald-500/50">V</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 mb-1" id="formAwayName">Visita</p>
+                        <div class="flex gap-1" id="formAwayBadges">
+                            <!-- Generado por JS -->
+                        </div>
+                    </div>
+                </div>
 
-<p id="ket">¡HAZ CLIC EN MI CARTA DE AMOR!</p>
+                <!-- Táctica -->
+                <div class="glass-panel rounded-xl p-5 xl:col-span-2">
+                    <h3 class="text-slate-300 font-semibold mb-4 text-sm uppercase flex items-center"><i class="fa-solid fa-chess-knight text-purple-400 mr-2"></i>Análisis Táctico Profundo</h3>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-2"></i><span id="tac1">Dominio de posesión esperado a favor del local.</span></li>
+                        <li class="flex items-start"><i class="fa-solid fa-bolt text-yellow-400 mt-1 mr-2"></i><span id="tac2">El equipo visitante dependerá de transiciones rápidas y contragolpes.</span></li>
+                        <li class="flex items-start"><i class="fa-solid fa-shield-halved text-blue-400 mt-1 mr-2"></i><span id="tac3">Zonas clave: Las bandas serán determinantes por la debilidad defensiva del lateral derecho visitante.</span></li>
+                    </ul>
+                </div>
 
-<blockquote id='bq'>
-<p id="kalimat"></p>
-<p id="kalimatb"></p>
-<p id="kalimatc"></p>
-</blockquote>
+                <!-- Bajas e Impacto -->
+                <div class="glass-panel rounded-xl p-5">
+                    <h3 class="text-slate-300 font-semibold mb-4 text-sm uppercase flex items-center"><i class="fa-solid fa-user-injured text-red-400 mr-2"></i>Bajas Clave</h3>
+                    <div class="space-y-3">
+                        <div class="bg-red-500/10 border border-red-500/20 rounded p-2 text-xs">
+                            <span class="text-red-400 font-bold block mb-1">Local</span>
+                            <span id="injHome">1 Titular lesionado (Defensa central).</span>
+                        </div>
+                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs">
+                            <span class="text-yellow-400 font-bold block mb-1">Visita</span>
+                            <span id="injAway">Sin bajas significativas. Plantilla completa.</span>
+                        </div>
+                    </div>
+                </div>
 
-<div id="Tombol">
-<a id="By" onClick="multifungsi()">
-<b id="tmbl">SÍ</b>
-</a>
+            </div>
+        </div>
+    </main>
 
-<a id="Bn" onClick="tolak()">NO</a>
-</div>
+    <script>
+        const loadingTexts = [
+            "Procesando historial de enfrentamientos...",
+            "Calculando métricas xG (Goles Esperados)...",
+            "Analizando estado de forma y fatiga física...",
+            "Simulando 10,000 escenarios tácticos...",
+            "Generando predicción de élite..."
+        ];
 
-</div>
+        function getRandomForm() {
+            const results = ['V', 'V', 'V', 'E', 'D', 'E'];
+            let html = '';
+            for(let i=0; i<5; i++){
+                let res = results[Math.floor(Math.random() * results.length)];
+                let colorClass = res === 'V' ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/50' : 
+                                 res === 'E' ? 'bg-slate-500/20 text-slate-400 border-slate-500/50' : 
+                                 'bg-red-500/20 text-red-500 border-red-500/50';
+                html += `<span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold border ${colorClass}">${res}</span>`;
+            }
+            return html;
+        }
 
-<script>
+        function startAnalysis() {
+            const home = document.getElementById('homeTeam').value.trim() || 'Equipo Local';
+            const away = document.getElementById('awayTeam').value.trim() || 'Equipo Visitante';
 
-/* ALERTAS TRADUCIDAS */
+            // Reset UI
+            document.getElementById('resultsDashboard').classList.add('hidden');
+            document.getElementById('resultsDashboard').classList.remove('fade-in');
+            const loader = document.getElementById('loader');
+            const loadText = document.getElementById('loadingText');
+            
+            loader.classList.remove('hidden');
+            loader.classList.add('flex');
 
-async function pesan(){
+            // Simulate AI Loading Steps
+            let step = 0;
+            const interval = setInterval(() => {
+                step++;
+                if (step < loadingTexts.length) {
+                    loadText.innerText = loadingTexts[step];
+                }
+            }, 700);
 
-await swalst.fire({
-title: 'Hola mi pequeña ❤️',
-imageUrl: '' + stiker1.src,
-});
+            // Generate AI Mock Data after delay
+            setTimeout(() => {
+                clearInterval(interval);
+                loader.classList.add('hidden');
+                loader.classList.remove('flex');
+                
+                generatePrediction(home, away);
+                
+                const dash = document.getElementById('resultsDashboard');
+                dash.classList.remove('hidden');
+                dash.classList.add('fade-in');
+            }, 3500);
+        }
 
-await swalst.fire({
-title: '¿Cómo estás mi amor? 🥳',
-imageUrl: '' + stiker2.src,
-});
+        function generatePrediction(home, away) {
+            // Generate probabilities
+            let probH = Math.floor(Math.random() * 40) + 30; // 30-70%
+            let probD = Math.floor(Math.random() * 20) + 15; // 15-35%
+            let probA = 100 - probH - probD;
 
-await swalst.fire({
-title: 'Mi vida cambió cuando dijiste ❤️SÍ❤️',
-imageUrl: '' + stiker6.src,
-});
+            // Score prediction logic based on probabilities
+            let scoreH = Math.floor(Math.random() * 4);
+            let scoreA = Math.floor(Math.random() * 4);
+            if(probH > probA + 20) scoreH = Math.max(1, scoreH + 1);
+            if(probA > probH + 20) scoreA = Math.max(1, scoreA + 1);
+            if(Math.abs(probH - probA) < 10) scoreH = scoreA;
 
-await swalst.fire({
-title: '¿Sabías que te amo?',
-imageUrl: '' + stiker3.src,
-});
+            // Update DOM Elements
+            document.getElementById('resHomeName').innerText = home;
+            document.getElementById('resAwayName').innerText = away;
+            document.getElementById('predScore').innerText = `${scoreH} - ${scoreA}`;
+            
+            // Probabilities
+            document.getElementById('probHomeName').innerText = `${home} (Victoria)`;
+            document.getElementById('probAwayName').innerText = `${away} (Victoria)`;
+            
+            document.getElementById('probHomeVal').innerText = `${probH}%`;
+            document.getElementById('probDrawVal').innerText = `${probD}%`;
+            document.getElementById('probAwayVal').innerText = `${probA}%`;
 
-await swalst.fire({
-title: 'En realidad te amo desde hace mucho 👉🏻👈🏻',
-imageUrl: '' + stiker4.src,
-});
+            // Reset bars to 0 then animate
+            setTimeout(() => {
+                document.getElementById('barHome').style.width = `${probH}%`;
+                document.getElementById('barDraw').style.width = `${probD}%`;
+                document.getElementById('barAway').style.width = `${probA}%`;
+                
+                let confidence = Math.floor(Math.random() * 25) + 70; // 70-95%
+                document.getElementById('confidenceBar').style.width = `${confidence}%`;
+                document.getElementById('confidenceText').innerText = `${confidence}%`;
+            }, 100);
 
-await swalst.fire({
-title: 'Me encanta estar contigo ❤️',
-imageUrl: '' + stiker5.src,
-});
+            // Details
+            document.getElementById('formHomeName').innerText = home;
+            document.getElementById('formAwayName').innerText = away;
+            document.getElementById('formHomeBadges').innerHTML = getRandomForm();
+            document.getElementById('formAwayBadges').innerHTML = getRandomForm();
 
-katangetik = "¿TE ESTÁ GUSTANDO MI REGALO MI AMOR? 🤭❤️";
-pesanakhir1 = "¡Siii! Gracias por ser mi amor ❤️";
-pesanakhir2 = "Pulsa continuar 💫";
-pesanakhir3 = "CONTINUAR";
+            // Tactical strings
+            const tactics = [
+                `El algoritmo detecta que ${home} tiene un 65% de probabilidad de anotar en balón parado.`,
+                `${away} suele sufrir en los últimos 15 minutos (caída de xG en contra del 40%).`,
+                `La presión alta de ${home} será clave para forzar errores en la salida de ${away}.`,
+                `Batalla en el mediocampo: Se proyecta una intensidad de duelos del 85% a favor del local.`,
+                `Dependencia ofensiva: ${away} canalizará el 70% de sus ataques por la banda izquierda.`
+            ];
+            
+            // Randomize array
+            const shuffledTactics = tactics.sort(() => 0.5 - Math.random());
+            document.getElementById('tac1').innerText = shuffledTactics[0];
+            document.getElementById('tac2').innerText = shuffledTactics[1];
+            document.getElementById('tac3').innerText = shuffledTactics[2];
 
-}
-</script>
-
+            const injuries = [
+                "Sin bajas críticas. Plantilla al 95%.",
+                "1 Jugador clave en duda por fatiga muscular.",
+                "Falta el creador de juego principal (Suspensión).",
+                "Rotaciones esperadas tras partido internacional."
+            ];
+            document.getElementById('injHome').innerText = injuries[Math.floor(Math.random() * injuries.length)];
+            document.getElementById('injAway').innerText = injuries[Math.floor(Math.random() * injuries.length)];
+        }
+    </script>
 </body>
 </html>
